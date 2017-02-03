@@ -24,7 +24,7 @@ __contributors__ = ["Thomas Broyer (t.broyer@ltgt.net)",
     "Louis Nyffenegger",
     "Mark Pilgrim"]
 __license__ = "MIT"
-__version__ = "0.9.2"
+__version__ = "0.10.1"
 
 import re
 import sys
@@ -198,7 +198,7 @@ def _convert_byte_str(s):
     if not isinstance(s, str):
         return str(s, 'utf-8')
     return s
-    
+
 def _parse_cache_control(headers):
     retval = {}
     if 'cache-control' in headers:
