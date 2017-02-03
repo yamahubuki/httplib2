@@ -1,3 +1,9 @@
+0.10.2
+
+  Just a reupload of 0.10.1, which was broken for Python3
+  because wheel distribution doesn't play well with our 2/3 split code base.
+  https://github.com/httplib2/httplib2/issues/43
+
 0.10.1
 
   This is the first release by new httplib2 team. See post by Joe
