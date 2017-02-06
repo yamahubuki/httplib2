@@ -65,44 +65,54 @@ except ImportError:
         socks = None
 
 # Build the appropriate socket wrapper for ssl
+ssl = None
 ssl_SSLError = None
 ssl_CertificateError = None
 try:
-    import ssl # python 2.6
-    ssl_SSLError = ssl.SSLError
-    ssl_CertificateError = ssl.CertificateError
-    def _ssl_wrap_socket(sock, key_file, cert_file, disable_validation,
-                         ca_certs, ssl_version, hostname):
-        if disable_validation:
-            cert_reqs = ssl.CERT_NONE
-        else:
-            cert_reqs = ssl.CERT_REQUIRED
-        if ssl_version is None:
-            ssl_version = ssl.PROTOCOL_SSLv23
+    import ssl  # python 2.6
+except ImportError:
+    pass
+if ssl is not None:
+    ssl_SSLError = getattr(ssl, 'SSLError', None)
+    ssl_CertificateError = getattr(ssl, 'CertificateError', None)
 
-        if hasattr(ssl, 'SSLContext'): # Python 2.7.9
-            context = ssl.SSLContext(ssl_version)
-            context.verify_mode = cert_reqs
-            context.check_hostname = (cert_reqs != ssl.CERT_NONE)
-            if cert_file:
-                context.load_cert_chain(cert_file, key_file)
-            if ca_certs:
-                context.load_verify_locations(ca_certs)
-            return context.wrap_socket(sock, server_hostname=hostname)
-        else:
-            return ssl.wrap_socket(sock, keyfile=key_file, certfile=cert_file,
-                                   cert_reqs=cert_reqs, ca_certs=ca_certs,
-                                   ssl_version=ssl_version)
-except (AttributeError, ImportError):
-    def _ssl_wrap_socket(sock, key_file, cert_file, disable_validation,
-                         ca_certs, ssl_version, hostname):
-        if not disable_validation:
-            raise CertificateValidationUnsupported(
-                    "SSL certificate validation is not supported without "
-                    "the ssl module installed. To avoid this error, install "
-                    "the ssl module, or explicity disable validation.")
-        ssl_sock = socket.ssl(sock, key_file, cert_file)
-        return httplib.FakeSocket(sock, ssl_sock)
+
+def _ssl_wrap_socket(sock, key_file, cert_file, disable_validation,
+                     ca_certs, ssl_version, hostname):
+    if disable_validation:
+        cert_reqs = ssl.CERT_NONE
+    else:
+        cert_reqs = ssl.CERT_REQUIRED
+    if ssl_version is None:
+        ssl_version = ssl.PROTOCOL_SSLv23
+
+    if hasattr(ssl, 'SSLContext'):  # Python 2.7.9
+        context = ssl.SSLContext(ssl_version)
+        context.verify_mode = cert_reqs
+        context.check_hostname = (cert_reqs != ssl.CERT_NONE)
+        if cert_file:
+            context.load_cert_chain(cert_file, key_file)
+        if ca_certs:
+            context.load_verify_locations(ca_certs)
+        return context.wrap_socket(sock, server_hostname=hostname)
+    else:
+        return ssl.wrap_socket(sock, keyfile=key_file, certfile=cert_file,
+                               cert_reqs=cert_reqs, ca_certs=ca_certs,
+                               ssl_version=ssl_version)
+
+
+def _ssl_wrap_socket_unsupported(sock, key_file, cert_file, disable_validation,
+                                 ca_certs, ssl_version, hostname):
+    if not disable_validation:
+        raise CertificateValidationUnsupported(
+                "SSL certificate validation is not supported without "
+                "the ssl module installed. To avoid this error, install "
+                "the ssl module, or explicity disable validation.")
+    ssl_sock = socket.ssl(sock, key_file, cert_file)
+    return httplib.FakeSocket(sock, ssl_sock)
+
+if ssl is None:
+    _ssl_wrap_socket = _ssl_wrap_socket_unsupported
 
 
 if sys.version_info >= (2,3):
