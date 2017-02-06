@@ -1,3 +1,8 @@
+0.10.3
+
+  Fix certificate validation on Python<=2.7.8 without ssl.CertificateError
+  https://github.com/httplib2/httplib2/issues/45
+
 0.10.2
 
   Just a reupload of 0.10.1, which was broken for Python3
