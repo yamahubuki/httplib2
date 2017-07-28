@@ -109,5 +109,5 @@ that the cached copy must not be used when handling this request.
 
 More example usage can be found at:
 
- * https://github.com/jcgregorio/httplib2/wiki/Examples
- * https://github.com/jcgregorio/httplib2/wiki/Examples-Python3
+ * https://github.com/httplib2/httplib2/wiki/Examples
+ * https://github.com/httplib2/httplib2/wiki/Examples-Python3
