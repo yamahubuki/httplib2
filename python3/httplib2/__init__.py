@@ -795,12 +795,15 @@ class ProxyInfo(object):
     if self.bypass_hosts is AllHosts:
       return True
 
-    bypass = False
-    for domain in self.bypass_hosts:
-      if hostname.endswith(domain):
-        bypass = True
-
-    return bypass
+    hostname = '.' + hostname.lstrip('.')
+    for skip_name in self.bypass_hosts:
+      # *.suffix
+      if skip_name.startswith('.') and hostname.endswith(skip_name):
+        return True
+      # exact match
+      if hostname == '.' + skip_name:
+        return True
+    return False
 
 
 def proxy_info_from_environment(method='http'):

@@ -46,11 +46,15 @@ def test_from_env_none():
 def test_applies_to():
     os.environ['http_proxy'] = 'http://myproxy.example.com:80'
     os.environ['https_proxy'] = 'http://myproxy.example.com:81'
-    os.environ['no_proxy'] = 'localhost,otherhost.domain.local,example.com'
+    os.environ['no_proxy'] = 'localhost,example.com,.wildcard'
     pi = httplib2.proxy_info_from_environment()
     assert not pi.applies_to('localhost')
     assert pi.applies_to('www.google.com')
-    assert not pi.applies_to('www.example.com')
+    assert pi.applies_to('prefixlocalhost')
+    assert pi.applies_to('www.example.com')
+    assert pi.applies_to('sub.example.com')
+    assert not pi.applies_to('sub.wildcard')
+    assert not pi.applies_to('pub.sub.wildcard')
 
 
 def test_noproxy_trailing_comma():
