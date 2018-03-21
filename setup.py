@@ -2,7 +2,7 @@ import setuptools
 import sys
 
 pkgdir = {'': 'python%s' % sys.version_info[0]}
-VERSION = '0.10.3'
+VERSION = '0.11.0'
 
 setuptools.setup(
     name='httplib2',
