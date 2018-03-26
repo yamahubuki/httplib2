@@ -1,3 +1,8 @@
+0.11.1
+
+  Fix HTTP(S)ConnectionWithTimeout AttributeError proxy_info
+  https://github.com/httplib2/httplib2/pull/97
+
 0.11.0
 
   Add DigiCert Global Root G2 serial 033af1e6a711a9a0bb2864b11d09fae5
