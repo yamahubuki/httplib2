@@ -1,3 +1,8 @@
+0.11.2
+
+  proxy: py3 NameError basestring
+  https://github.com/httplib2/httplib2/pull/100
+
 0.11.1
 
   Fix HTTP(S)ConnectionWithTimeout AttributeError proxy_info
