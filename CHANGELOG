@@ -1,3 +1,7 @@
+0.11.3
+
+  No changes, just reupload of 0.11.2 after fixing automatic release conditions in Travis.
+
 0.11.2
 
   proxy: py3 NameError basestring
