@@ -49,6 +49,7 @@ jobs:
       install: pip install $pip_install_common
       script: test_group=package script/test
     - stage: release
+      if: (branch = master)
       env: _=pypi-upload-test
       python: 3.6
       install: pip install $pip_install_common
@@ -65,9 +66,8 @@ jobs:
         skip_cleanup: true
         on:
           repo: httplib2/httplib2
-          all_branches: true
     - stage: release
-      if: (branch = master) AND (tag IS present)
+      if: (tag IS present)
       env: _=pypi-upload-public
       python: 3.6
       install: pip install $pip_install_common
@@ -83,5 +83,4 @@ jobs:
         skip_cleanup: true
         on:
           repo: httplib2/httplib2
-          branch: master
           tags: true
