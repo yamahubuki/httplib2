@@ -14,12 +14,16 @@ import re
 import shutil
 import six
 import socket
+import ssl
 import struct
 import threading
 import time
 import traceback
 import zlib
-from six.moves import http_client, queue
+from six.moves import http_client, queue, urllib
+
+
+_missing = object()
 
 
 @contextlib.contextmanager
@@ -239,9 +243,10 @@ class MockHTTPBadStatusConnection(object):
 
 
 @contextlib.contextmanager
-def server_socket(fun, request_count=1, timeout=5):
+def server_socket(fun, request_count=1, timeout=5, scheme='http', ssl_version=None):
     gresult = [None]
     gcounter = [0]
+    assert scheme in ('http', 'https'), 'tests.server_socket: invalid scheme="{}"'.format(scheme)
 
     def tick(request):
         gcounter[0] += 1
@@ -279,10 +284,21 @@ def server_socket(fun, request_count=1, timeout=5):
         print('non critical error on SO_REUSEADDR', ex)
     server.listen(10)
     server.settimeout(timeout)
+    if scheme == 'https':
+        tls_paths = get_tls_paths()
+        # TODO: Drop py3.3 support and replace this with ssl.create_default_context
+        ssl_context = ssl.SSLContext(getattr(ssl, 'PROTOCOL_TLS', None) or getattr(ssl, 'PROTOCOL_SSLv23'))
+        # TODO: leave this when py3.3 support is dropped
+        # ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH, cafile=tls_paths['ca'])
+        ssl_context.load_cert_chain(tls_paths['server'], tls_paths['key'])
+        ssl_kwargs = {'server_side': True}
+        if ssl_version is not None:
+            ssl_kwargs['ssl_version'] = ssl_version
+        server = ssl_context.wrap_socket(server, **ssl_kwargs)
     t = threading.Thread(target=server_socket_thread, args=(server,))
     t.daemon = True
     t.start()
-    yield u'http://{0}:{1}/'.format(*server.getsockname())
+    yield u'{}://{}:{}/'.format(scheme, *server.getsockname())
     server.close()
     t.join()
     if gresult[0] is not None:
@@ -587,6 +603,24 @@ def get_cache_path():
     return path
 
 
+def build_project_path(rel, check=True):
+    project = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
+    path = os.path.join(project, rel)
+    if check:
+        assert os.path.exists(path)
+    return path
+
+
+def get_tls_paths():
+    d = {
+        'ca': build_project_path('tests/tls-ca.pem', check=True),
+        'ca-unknown': build_project_path('tests/tls-ca-unknown.pem', check=True),
+        'key': build_project_path('tests/tls-key.pem', check=True),
+        'server': build_project_path('tests/tls-server.pem', check=True),
+    }
+    return d
+
+
 def gen_digest_nonce(salt=b''):
     t = struct.pack('>Q', int(time.time() * 1e9))
     return base64.b64encode(t + b':' + hashlib.sha1(t + salt).digest()).decode()
@@ -618,3 +652,22 @@ def deflate_compress(bs):
 
 def deflate_decompress(bs):
     return zlib.decompress(bs, -zlib.MAX_WBITS)
+
+
+def rebuild_uri(old, scheme=_missing, netloc=_missing, host=_missing, port=_missing, path=_missing):
+    if '//' not in old:
+        old = '//' + old
+    u = urllib.parse.urlsplit(old)
+    if scheme is _missing:
+        scheme = u.scheme
+    if netloc is _missing:
+        netloc = u.netloc
+    if host is _missing:
+        host = u.hostname if not u.netloc.startswith('[') else '[{}]'.format(u.hostname)
+    if port is _missing:
+        port = u.port
+    netloc = host if port is None else '{}:{}'.format(host, port)
+    if path is _missing:
+        path = u.path
+    new = (scheme, netloc, path) + u[3:]
+    return urllib.parse.urlunsplit(new)
