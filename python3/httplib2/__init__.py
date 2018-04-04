@@ -1462,12 +1462,8 @@ a string that contains the response entity body.
                     entry_disposition = _entry_disposition(info, headers)
 
                     if entry_disposition == "FRESH":
-                        if not cached_value:
-                            info['status'] = '504'
-                            content = b""
                         response = Response(info)
-                        if cached_value:
-                            response.fromcache = True
+                        response.fromcache = True
                         return (response, content)
 
                     if entry_disposition == "STALE":
