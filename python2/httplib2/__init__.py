@@ -259,36 +259,33 @@ def urlnorm(uri):
 
 
 # Cache filename construction (original borrowed from Venus http://intertwingly.net/code/venus/)
-re_url_scheme    = re.compile(r'^\w+://')
-re_slash         = re.compile(r'[?/:|]+')
+re_url_scheme = re.compile(r'^\w+://')
+re_unsafe = re.compile(r'[^\w\-_.()=!]+')
 
 
 def safename(filename):
     """Return a filename suitable for the cache.
-
     Strips dangerous and common characters to create a filename we
     can use to store the cache in.
     """
+    if isinstance(filename, str):
+        filename_bytes = filename
+        filename = filename.decode('utf-8')
+    else:
+        filename_bytes = filename.encode('utf-8')
+    filemd5 = _md5(filename_bytes).hexdigest()
+    filename = re_url_scheme.sub('', filename)
+    filename = re_unsafe.sub('', filename)
 
-    try:
-        if re_url_scheme.match(filename):
-            if isinstance(filename,str):
-                filename = filename.decode('utf-8')
-                filename = filename.encode('idna')
-            else:
-                filename = filename.encode('idna')
-    except UnicodeError:
-        pass
-    if isinstance(filename,unicode):
-        filename=filename.encode('utf-8')
-    filemd5 = _md5(filename).hexdigest()
-    filename = re_url_scheme.sub("", filename)
-    filename = re_slash.sub(",", filename)
+    # limit length of filename (vital for Windows)
+    # https://github.com/httplib2/httplib2/pull/74
+    # C:\Users\    <username>    \AppData\Local\Temp\  <safe_filename>  ,   <md5>
+    #   9 chars + max 104 chars  +     20 chars      +       x       +  1  +  32  = max 259 chars
+    # Thus max safe filename x = 93 chars. Let it be 90 to make a round sum:
+    filename = filename[:90]
 
-    # limit length of filename
-    if len(filename)>200:
-        filename=filename[:200]
-    return ",".join((filename, filemd5))
+    return ','.join((filename, filemd5))
+
 
 NORMALIZE_SPACE = re.compile(r'(?:\r\n)?[ \t]+')
 
