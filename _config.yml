@@ -1,0 +1,8 @@
+title: Httplib2
+description: A comprehensive HTTP client library for Python
+google_analytics: 
+show_downloads: true
+theme: jekyll-theme-slate
+
+gems:
+  - jekyll-mentions
