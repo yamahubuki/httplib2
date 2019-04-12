@@ -94,6 +94,7 @@ interactive() {
         virtualenv $venv
         $venv/bin/pip install -U pip setuptools wheel twine
     fi
+    $venv/bin/python setup.py clean --all
     $venv/bin/python setup.py sdist
 
 	if confirm "Upload to PyPI? Use in special situation, normally CI (Travis) will upload to PyPI. [yN] " ; then
