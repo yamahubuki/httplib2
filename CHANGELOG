@@ -1,3 +1,7 @@
+0.12.3
+
+  No changes to library. Distribute py3 wheels.
+
 0.12.1
 
   Catch socket timeouts and clear dead connection
