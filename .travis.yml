@@ -13,7 +13,6 @@ env:
     - pip_install_common='pip>=9.0 setuptools>=36.2 wheel>=0.30'
 python:
   - 2.7
-  - 3.4
   - 3.5
   - 3.6
   - 3.7
@@ -42,6 +41,15 @@ jobs:
       python: 3.7
       install: pip install -r requirements-test.txt
       script: test_group=pep8 script/test
+    - stage: test
+      env: _-py37-openssl11
+      python: 3.7 # we'll use compiled version but makes Travis look correct
+      install:
+        - deactivate && rm -rf $HOME/virtualenv
+        - source script/compile-py3-openssl11.sh # source to alter PATH
+        - pip install virtualenv && virtualenv $HOME/virtualenv && source $HOME/virtualenv/bin/activate
+        - pip install $pip_install_common -r requirements-test.txt
+      script: script/test -sv
     - stage: test
       env: _=py2-package
       python: 2.7
