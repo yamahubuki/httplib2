@@ -1,3 +1,8 @@
+0.13.0
+
+  Allow setting TLS max/min versions
+  https://github.com/httplib2/httplib2/pull/138
+
 0.12.3
 
   No changes to library. Distribute py3 wheels.
