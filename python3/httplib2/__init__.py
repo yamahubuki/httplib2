@@ -1484,6 +1484,16 @@ class Http(object):
         # Keep Authorization: headers on a redirect.
         self.forward_authorization_headers = False
 
+    def close(self):
+        """Close persistent connections, clear sensitive data.
+        Not thread-safe, requires external synchronization against concurrent requests.
+        """
+        existing, self.connections = self.connections, {}
+        for _, c in existing.items():
+            c.close()
+        self.certificates.clear()
+        self.clear_credentials()
+
     def __getstate__(self):
         state_dict = copy.copy(self.__dict__)
         # In case request is augmented by some foreign object such as

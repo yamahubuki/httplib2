@@ -232,3 +232,13 @@ def test_http_443_forced_https():
         assert len(m.call_args) > 0, "expected Http._request() call"
         conn = m.call_args[0][0]
         assert isinstance(conn, httplib2.HTTPConnectionWithTimeout)
+
+
+def test_close():
+    http = httplib2.Http()
+    assert len(http.connections) == 0
+    with tests.server_const_http() as uri:
+        http.request(uri)
+        assert len(http.connections) == 1
+        http.close()
+        assert len(http.connections) == 0

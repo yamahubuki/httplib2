@@ -1674,6 +1674,16 @@ class Http(object):
         # Keep Authorization: headers on a redirect.
         self.forward_authorization_headers = False
 
+    def close(self):
+        """Close persistent connections, clear sensitive data.
+        Not thread-safe, requires external synchronization against concurrent requests.
+        """
+        existing, self.connections = self.connections, {}
+        for _, c in existing.iteritems():
+            c.close()
+        self.certificates.clear()
+        self.clear_credentials()
+
     def __getstate__(self):
         state_dict = copy.copy(self.__dict__)
         # In case request is augmented by some foreign object such as
@@ -1950,7 +1960,7 @@ class Http(object):
         a string that contains the response entity body.
         """
         conn_key = ''
-        
+
         try:
             if headers is None:
                 headers = {}
@@ -2166,7 +2176,7 @@ class Http(object):
                 conn = self.connections.pop(conn_key, None)
                 if conn:
                     conn.close()
-                    
+
             if self.force_exception_to_status_code:
                 if isinstance(e, HttpLib2ErrorWithResponse):
                     response = e.response
