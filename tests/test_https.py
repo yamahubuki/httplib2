@@ -161,6 +161,30 @@ def test_client_cert_verified():
     assert cert_log[0]["serialNumber"] == "E2AA6A96D1BF1AEC"
 
 
+def test_client_cert_password_verified():
+    cert_log = []
+
+    def setup_tls(context, server, skip_errors):
+        context.load_verify_locations(cafile=tests.CA_CERTS)
+        context.verify_mode = ssl.CERT_REQUIRED
+        return context.wrap_socket(server, server_side=True)
+
+    def handler(request):
+        cert_log.append(request.client_sock.getpeercert())
+        return tests.http_response_bytes()
+
+    http = httplib2.Http(ca_certs=tests.CA_CERTS)
+    with tests.server_request(handler, tls=setup_tls) as uri:
+        uri_parsed = urllib.parse.urlparse(uri)
+        http.add_certificate(tests.CLIENT_ENCRYPTED_PEM, tests.CLIENT_ENCRYPTED_PEM,
+                             uri_parsed.netloc, password="12345")
+        http.request(uri)
+
+    assert len(cert_log) == 1
+    # TODO extract serial from tests.CLIENT_PEM
+    assert cert_log[0]["serialNumber"] == "E2AA6A96D1BF1AED"
+
+
 @pytest.mark.skipif(
     not hasattr(tests.ssl_context(), "set_servername_callback"),
     reason="SSLContext.set_servername_callback is not available",
