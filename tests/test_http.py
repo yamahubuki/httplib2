@@ -622,6 +622,57 @@ def test_get_307():
         assert content == b"final content\n"
 
 
+def test_post_307():
+    # 307: follow with same method
+    http = httplib2.Http(cache=tests.get_cache_path(), timeout=1)
+    http.follow_all_redirects = True
+    r307 = tests.http_response_bytes(status=307, headers={"location": "/final"})
+    r200 = tests.http_response_bytes(status=200, body=b"final content\n")
+
+    with tests.server_list_http([r307, r200, r307, r200]) as uri:
+        response, content = http.request(uri, "POST")
+        assert response.previous.status == 307
+        assert not response.previous.fromcache
+        assert response.status == 200
+        assert not response.fromcache
+        assert content == b"final content\n"
+
+        response, content = http.request(uri, "POST")
+        assert response.previous.status == 307
+        assert not response.previous.fromcache
+        assert response.status == 200
+        assert not response.fromcache
+        assert content == b"final content\n"
+
+
+def test_change_308():
+    # 308: follow with same method, cache redirect
+    http = httplib2.Http(cache=tests.get_cache_path(), timeout=1)
+    routes = {
+        "/final": tests.make_http_reflect(),
+        "": tests.http_response_bytes(
+            status="308 Permanent Redirect",
+            add_date=True,
+            headers={"cache-control": "max-age=300", "location": "/final"},
+        ),
+    }
+
+    with tests.server_route(routes, request_count=3) as uri:
+        response, content = http.request(uri, "CHANGE", body=b"hello308")
+        assert response.previous.status == 308
+        assert not response.previous.fromcache
+        assert response.status == 200
+        assert not response.fromcache
+        assert content.startswith(b"CHANGE /final HTTP")
+
+        response, content = http.request(uri, "CHANGE")
+        assert response.previous.status == 308
+        assert response.previous.fromcache
+        assert response.status == 200
+        assert not response.fromcache
+        assert content.startswith(b"CHANGE /final HTTP")
+
+
 def test_get_410():
     # Test that we pass 410's through
     http = httplib2.Http()
