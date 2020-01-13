@@ -1,3 +1,11 @@
+0.16.0
+
+  IMPORTANT cache invalidation change, fix 307 keep method, add 308 Redirects
+  https://github.com/httplib2/httplib2/issues/151
+
+  proxy: username/password as str compatible with pysocks
+  https://github.com/httplib2/httplib2/issues/154
+
 0.15.0
 
   python2: regression in connect() error handling
