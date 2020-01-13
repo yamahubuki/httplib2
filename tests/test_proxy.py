@@ -32,8 +32,8 @@ def test_from_url_ident():
     pi = httplib2.proxy_info_from_url("http://zoidberg:fish@someproxy:99")
     assert pi.proxy_host == "someproxy"
     assert pi.proxy_port == 99
-    assert pi.proxy_user == b"zoidberg"
-    assert pi.proxy_pass == b"fish"
+    assert pi.proxy_user == "zoidberg"
+    assert pi.proxy_pass == "fish"
 
 
 def test_from_env():
