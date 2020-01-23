@@ -294,6 +294,9 @@ HOP_BY_HOP = [
 # https://tools.ietf.org/html/rfc7231#section-8.1.3
 SAFE_METHODS = ("GET", "HEAD")  # TODO add "OPTIONS", "TRACE"
 
+# To change, assign to `Http().redirect_codes`
+REDIRECT_CODES = frozenset((300, 301, 302, 303, 307, 308))
+
 
 def _get_end2end_headers(response):
     hopbyhop = list(HOP_BY_HOP)
@@ -1664,6 +1667,8 @@ class Http(object):
         # If set to False then no redirects are followed, even safe ones.
         self.follow_redirects = True
 
+        self.redirect_codes = REDIRECT_CODES
+
         # Which HTTP methods do we apply optimistic concurrency to, i.e.
         # which methods get an "if-match:" etag header added to them.
         self.optimistic_concurrency_methods = ["PUT", "PATCH"]
@@ -1866,7 +1871,7 @@ class Http(object):
             or method in self.safe_methods
             or response.status in (303, 308)
         ):
-            if self.follow_redirects and response.status in (300, 301, 302, 303, 307, 308):
+            if self.follow_redirects and response.status in self.redirect_codes:
                 # Pick out the location header and basically start from the beginning
                 # remembering first to strip the ETag header and decrement our 'depth'
                 if redirections:

@@ -694,3 +694,12 @@ content"""
         assert response.status == 200
         assert content == b"content"
         assert response["link"], "link1, link2"
+
+
+def test_custom_redirect_codes():
+    http = httplib2.Http()
+    http.redirect_codes = set([300])
+    with tests.server_const_http(status=301, request_count=1) as uri:
+        response, content = http.request(uri, "GET")
+        assert response.status == 301
+        assert response.previous is None
