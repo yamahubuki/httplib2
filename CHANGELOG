@@ -1,3 +1,8 @@
+0.17.1
+
+  python3: no_proxy was not checked with https
+  https://github.com/httplib2/httplib2/issues/160
+
 0.17.0
 
   feature: Http().redirect_codes set, works after follow(_all)_redirects check
