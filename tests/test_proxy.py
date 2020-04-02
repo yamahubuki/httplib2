@@ -184,7 +184,6 @@ def test_functional_noproxy_star_http(monkeypatch):
         return tests.http_response_bytes()
 
     with tests.server_request(handler) as uri:
-        uri_parsed = urllib.parse.urlparse(uri)
         monkeypatch.setenv("http_proxy", uri)
         monkeypatch.setenv("no_proxy", "*")
         http = httplib2.Http()
@@ -201,7 +200,6 @@ def test_functional_noproxy_star_https(monkeypatch):
         return tests.http_response_bytes()
 
     with tests.server_request(handler, tls=True) as uri:
-        uri_parsed = urllib.parse.urlparse(uri)
         monkeypatch.setenv("https_proxy", uri)
         monkeypatch.setenv("no_proxy", "*")
         http = httplib2.Http(ca_certs=tests.CA_CERTS)
