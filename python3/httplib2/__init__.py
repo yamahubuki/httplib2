@@ -1366,7 +1366,7 @@ class HTTPSConnectionWithTimeout(http.client.HTTPSConnection):
             except socket.error as e:
                 socket_err = e
                 if self.debuglevel > 0:
-                    print("connect fail: ({0}, {1})".format((self.host, self.port)))
+                    print("connect fail: ({0}, {1})".format(self.host, self.port))
                     if use_proxy:
                         print(
                             "proxy: {0}".format(
