@@ -1,3 +1,8 @@
+0.17.3
+
+  IronPython2.7: relative import iri2uri fixes ImportError
+  https://github.com/httplib2/httplib2/pull/163
+
 0.17.2
 
   python3 + debug + IPv6 disabled: https raised
