@@ -1,3 +1,8 @@
+0.17.4
+
+  Ship test suite in source dist
+  https://github.com/httplib2/httplib2/pull/168
+
 0.17.3
 
   IronPython2.7: relative import iri2uri fixes ImportError
