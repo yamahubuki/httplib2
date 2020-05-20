@@ -1,3 +1,10 @@
+0.18.0
+
+  IMPORTANT security vulnerability CWE-93 CRLF injection
+  Force %xx quote of space, CR, LF characters in uri.
+  Special thanks to Recar https://github.com/Ciyfly for discrete notification.
+  https://cwe.mitre.org/data/definitions/93.html
+
 0.17.4
 
   Ship test suite in source dist
