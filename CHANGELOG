@@ -1,3 +1,9 @@
+0.18.1
+
+  explicit build-backend workaround for pip build isolation bug
+  "AttributeError: 'module' object has no attribute '__legacy__'" on pip install
+  https://github.com/httplib2/httplib2/issues/169
+
 0.18.0
 
   IMPORTANT security vulnerability CWE-93 CRLF injection
