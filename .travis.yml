@@ -10,7 +10,7 @@ cache:
 
 env:
   global:
-    - pip_install_common='pip>=9.0 setuptools>=36.2 wheel>=0.30'
+    - pip_install_common='pip>=9.0 setuptools>=43.0 wheel>=0.30'
 python:
   - 2.7
   - 3.5
