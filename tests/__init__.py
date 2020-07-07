@@ -1,5 +1,9 @@
 from __future__ import print_function
 
+import sys
+
+print("##############", sys.path)
+
 import base64
 import contextlib
 import copy
@@ -119,9 +123,9 @@ def parse_http_message(kind, buf):
     msg = kind()
     msg.raw = start_line
     if kind is HttpRequest:
-        assert re.match(
-            br".+ HTTP/\d\.\d\r\n$", start_line
-        ), "Start line does not look like HTTP request: " + repr(start_line)
+        assert re.match(br".+ HTTP/\d\.\d\r\n$", start_line), "Start line does not look like HTTP request: " + repr(
+            start_line
+        )
         msg.method, msg.uri, msg.proto = start_line.rstrip().decode().split(" ", 2)
         assert msg.proto.startswith("HTTP/"), repr(start_line)
     elif kind is HttpResponse:
@@ -201,14 +205,7 @@ class MockHTTPConnection(object):
     """
 
     def __init__(
-        self,
-        host,
-        port=None,
-        key_file=None,
-        cert_file=None,
-        strict=None,
-        timeout=None,
-        proxy_info=None,
+        self, host, port=None, key_file=None, cert_file=None, strict=None, timeout=None, proxy_info=None,
     ):
         self.host = host
         self.port = port
@@ -240,14 +237,7 @@ class MockHTTPBadStatusConnection(object):
     num_calls = 0
 
     def __init__(
-        self,
-        host,
-        port=None,
-        key_file=None,
-        cert_file=None,
-        strict=None,
-        timeout=None,
-        proxy_info=None,
+        self, host, port=None, key_file=None, cert_file=None, strict=None, timeout=None, proxy_info=None,
     ):
         self.host = host
         self.port = port
@@ -328,11 +318,7 @@ def server_socket(fun, request_count=1, timeout=5, scheme="", tls=None):
                     # at least in other/connection_close test
                     # should not be a problem since socket would close upon garbage collection
             if gcounter[0] > request_count:
-                gresult[0] = Exception(
-                    "Request count expected={0} actual={1}".format(
-                        request_count, gcounter[0]
-                    )
-                )
+                gresult[0] = Exception("Request count expected={0} actual={1}".format(request_count, gcounter[0]))
         except Exception as e:
             # traceback.print_exc caused IOError: concurrent operation on sys.stderr.close() under setup.py test
             print(traceback.format_exc(), file=sys.stderr)
@@ -458,21 +444,12 @@ def http_response_bytes(
     if add_etag:
         headers.setdefault("etag", '"{0}"'.format(hashlib.md5(body).hexdigest()))
     header_string = "".join("{0}: {1}\r\n".format(k, v) for k, v in headers.items())
-    if (
-        not undefined_body_length
-        and proto != "HTTP/1.0"
-        and "content-length" not in headers
-    ):
-        raise Exception(
-            "httplib2.tests.http_response_bytes: client could not figure response body length"
-        )
+    if not undefined_body_length and proto != "HTTP/1.0" and "content-length" not in headers:
+        raise Exception("httplib2.tests.http_response_bytes: client could not figure response body length")
     if str(status).isdigit():
         status = "{} {}".format(status, http_client.responses[status])
     response = (
-        "{proto} {status}\r\n{headers}\r\n".format(
-            proto=proto, status=status, headers=header_string
-        ).encode()
-        + body
+        "{proto} {status}\r\n{headers}\r\n".format(proto=proto, status=status, headers=header_string).encode() + body
     )
     return response
 
@@ -556,9 +533,7 @@ def store_request_response(out):
     return wrapper
 
 
-def http_reflect_with_auth(
-    allow_scheme, allow_credentials, out_renew_nonce=None, out_requests=None
-):
+def http_reflect_with_auth(allow_scheme, allow_credentials, out_renew_nonce=None, out_requests=None):
     """allow_scheme - 'basic', 'digest', etc allow_credentials - sequence of ('name', 'password') out_renew_nonce - None | [function]
 
         Way to return nonce renew function to caller.
@@ -575,9 +550,7 @@ def http_reflect_with_auth(
 
     def renew_nonce():
         if gnextnonce[0]:
-            assert False, (
-                "previous nextnonce was not used, probably bug in " "test code"
-            )
+            assert False, "previous nextnonce was not used, probably bug in " "test code"
         gnextnonce[0] = gen_digest_nonce()
         return gserver_nonce[0], gnextnonce[0]
 
@@ -612,9 +585,7 @@ def http_reflect_with_auth(
         if not auth_header:
             return deny()
         if " " not in auth_header:
-            return http_response_bytes(
-                status=400, body=b"authorization header syntax error"
-            )
+            return http_response_bytes(status=400, body=b"authorization header syntax error")
         scheme, data = auth_header.split(" ", 1)
         scheme = scheme.lower()
         if scheme != allow_scheme:
@@ -655,31 +626,16 @@ def http_reflect_with_auth(
                 return deny(body=b"auth-info nc missing")
             if client_opaque != server_opaque:
                 return deny(
-                    body="auth-info opaque mismatch expected={} actual={}".format(
-                        server_opaque, client_opaque
-                    ).encode()
+                    body="auth-info opaque mismatch expected={} actual={}".format(server_opaque, client_opaque).encode()
                 )
             for allow_username, allow_password in allow_credentials:
-                ha1 = hasher(
-                    ":".join((allow_username, realm, allow_password)).encode()
-                ).hexdigest()
+                ha1 = hasher(":".join((allow_username, realm, allow_password)).encode()).hexdigest()
                 allow_response = hasher(
-                    ":".join(
-                        (ha1, client_nonce, client_nc, client_cnonce, client_qop, ha2)
-                    ).encode()
+                    ":".join((ha1, client_nonce, client_nc, client_cnonce, client_qop, ha2)).encode()
                 ).hexdigest()
                 rspauth_ha2 = hasher(":{}".format(request.uri).encode()).hexdigest()
                 rspauth = hasher(
-                    ":".join(
-                        (
-                            ha1,
-                            client_nonce,
-                            client_nc,
-                            client_cnonce,
-                            client_qop,
-                            rspauth_ha2,
-                        )
-                    ).encode()
+                    ":".join((ha1, client_nonce, client_nc, client_cnonce, client_qop, rspauth_ha2,)).encode()
                 ).hexdigest()
                 if auth_info.get("response", "") == allow_response:
                     # TODO: fix or remove doubtful comment
@@ -699,10 +655,7 @@ def http_reflect_with_auth(
                     return make_http_reflect(headers=allow_headers)(request)
             return deny(body=b"supplied credentials are not allowed")
         else:
-            return http_response_bytes(
-                status=400,
-                body="unknown authorization scheme={0}".format(scheme).encode(),
-            )
+            return http_response_bytes(status=400, body="unknown authorization scheme={0}".format(scheme).encode(),)
 
     return http_reflect_with_auth_handler
 

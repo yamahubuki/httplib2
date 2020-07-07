@@ -23,6 +23,12 @@ main() {
 				flake8 python3/ tests/
 			fi
 			;;
+		appengine)
+			pip install "pytest-beds==0.3.0" -e .
+			local tmp=()
+			for flag in "${test_flags[@]}" ; do [[ ${flag} != tests/ ]] && tmp+=(${flag}) ; done
+			pytest --fulltrace --noisy-tasklets ${tmp[@]} tests/test_appengine.py
+			;;
 		package)
 			# TODO: sdist bdist_wheel
 			# but wheels don't roll well with our 2/3 split code base

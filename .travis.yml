@@ -50,6 +50,13 @@ jobs:
         - pip install $pip_install_common -r requirements-test.txt
       script: script/test -sv
     - stage: test
+      env: _=appengine
+      python: 3.7
+      install:
+        - pip install -r requirements-test.txt
+        - cache=$HOME/.cache script/setup-appengine-sdk
+      script: test_group=appengine GAE=$HOME/.cache/google_appengine httplib2_test_appengine=1 script/test
+    - stage: test
       env: _=py2-package
       python: 2.7
       install: pip install $pip_install_common

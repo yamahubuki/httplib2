@@ -1,0 +1,16 @@
+#!/bin/bash
+set -eux
+: ${appengine_version="1.9.91"}
+
+main() {
+	cd "$( dirname "${BASH_SOURCE[0]}" )/.."
+	: ${cache=$PWD/.cache}
+	if [[ ! -d "${cache}/google_appengine" ]] ; then
+		curl -fLsS -o ${cache}/appengine-sdk.zip -z ${cache}/appengine-sdk.zip https://storage.googleapis.com/appengine-sdks/featured/google_appengine_${appengine_version}.zip
+		unzip -q -o ${cache}/appengine-sdk.zip -d ${cache}/
+	fi
+	# delete httplib2 vendored in appengine SDK
+	rm -rf ${cache}/google_appengine/lib/httplib2
+}
+
+main "$@"
