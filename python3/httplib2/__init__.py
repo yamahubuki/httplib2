@@ -40,7 +40,7 @@ import socket
 import ssl
 import sys
 import time
-import urllib.parse
+import urllib.parse, urllib.request
 import zlib
 
 try:
@@ -1071,8 +1071,7 @@ def proxy_info_from_environment(method="http"):
     if method not in ("http", "https"):
         return
 
-    env_var = method + "_proxy"
-    url = os.environ.get(env_var, os.environ.get(env_var.upper()))
+    url = urllib.request.getproxies().get(method)
     if not url:
         return
     return proxy_info_from_url(url, method, noproxy=None)
