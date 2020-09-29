@@ -556,9 +556,7 @@ def store_request_response(out):
     return wrapper
 
 
-def http_reflect_with_auth(
-    allow_scheme, allow_credentials, out_renew_nonce=None, out_requests=None
-):
+def http_reflect_with_auth(allow_scheme, allow_credentials, out_renew_nonce=None, out_requests=None):
     """allow_scheme - 'basic', 'digest', etc allow_credentials - sequence of ('name', 'password') out_renew_nonce - None | [function]
 
         Way to return nonce renew function to caller.
@@ -575,9 +573,7 @@ def http_reflect_with_auth(
 
     def renew_nonce():
         if gnextnonce[0]:
-            assert False, (
-                "previous nextnonce was not used, probably bug in " "test code"
-            )
+            assert False, "previous nextnonce was not used, probably bug in test code"
         gnextnonce[0] = gen_digest_nonce()
         return gserver_nonce[0], gnextnonce[0]
 
@@ -596,6 +592,8 @@ def http_reflect_with_auth(
                 + ', nonce="{nonce}", opaque="{opaque}"'
                 + (", stale=true" if nonce_stale else "")
             ).format(realm=realm, nonce=gserver_nonce[0], opaque=server_opaque)
+        elif allow_scheme == "wsse":
+            authenticate = 'wsse realm="{realm}", profile="UsernameToken"'.format(realm=realm)
         else:
             raise Exception("unknown allow_scheme={0}".format(allow_scheme))
         deny_headers = {"www-authenticate": authenticate}
@@ -612,9 +610,7 @@ def http_reflect_with_auth(
         if not auth_header:
             return deny()
         if " " not in auth_header:
-            return http_response_bytes(
-                status=400, body=b"authorization header syntax error"
-            )
+            return http_response_bytes(status=400, body=b"authorization header syntax error")
         scheme, data = auth_header.split(" ", 1)
         scheme = scheme.lower()
         if scheme != allow_scheme:
@@ -698,11 +694,31 @@ def http_reflect_with_auth(
                     }
                     return make_http_reflect(headers=allow_headers)(request)
             return deny(body=b"supplied credentials are not allowed")
+        elif scheme == "wsse":
+            x_wsse = request.headers.get("x-wsse", "")
+            if x_wsse.count(",") != 3:
+                return http_response_bytes(status=400, body=b"x-wsse header syntax error")
+            auth_info = http_parse_auth(x_wsse)
+            client_username = auth_info.get("username", "")
+            client_nonce = auth_info.get("nonce", "")
+            client_created = auth_info.get("created", "")
+            client_digest = auth_info.get("passworddigest", "")
+            allow_password = None
+            for allow_username, allow_password in allow_credentials:
+                if client_username == allow_username:
+                    break
+            else:
+                return deny(body=b"unknown username")
+
+            digest = hashlib.sha1("".join((client_nonce, client_created, allow_password)).encode("utf-8")).digest()
+            digest_b64 = base64.b64encode(digest).decode()
+            print("$$$ check client={} == real={}".format(client_digest, digest_b64))
+            if client_digest == digest_b64:
+                return make_http_reflect()(request)
+
+            return deny(body=b"supplied credentials are not allowed")
         else:
-            return http_response_bytes(
-                status=400,
-                body="unknown authorization scheme={0}".format(scheme).encode(),
-            )
+            return http_response_bytes(status=400, body="unknown authorization scheme={0}".format(scheme).encode(),)
 
     return http_reflect_with_auth_handler
 

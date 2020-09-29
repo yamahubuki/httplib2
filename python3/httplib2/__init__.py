@@ -551,7 +551,7 @@ def _cnonce():
 def _wsse_username_token(cnonce, iso_now, password):
     return base64.b64encode(
         _sha(("%s%s%s" % (cnonce, iso_now, password)).encode("utf-8")).digest()
-    ).strip()
+    ).strip().decode("utf-8")
 
 
 # For credentials we need two things, first
