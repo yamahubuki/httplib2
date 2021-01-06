@@ -119,9 +119,9 @@ def parse_http_message(kind, buf):
     msg = kind()
     msg.raw = start_line
     if kind is HttpRequest:
-        assert re.match(
-            br".+ HTTP/\d\.\d\r\n$", start_line
-        ), "Start line does not look like HTTP request: " + repr(start_line)
+        assert re.match(br".+ HTTP/\d\.\d\r\n$", start_line), "Start line does not look like HTTP request: " + repr(
+            start_line
+        )
         msg.method, msg.uri, msg.proto = start_line.rstrip().decode().split(" ", 2)
         assert msg.proto.startswith("HTTP/"), repr(start_line)
     elif kind is HttpResponse:
@@ -201,14 +201,7 @@ class MockHTTPConnection(object):
     """
 
     def __init__(
-        self,
-        host,
-        port=None,
-        key_file=None,
-        cert_file=None,
-        strict=None,
-        timeout=None,
-        proxy_info=None,
+        self, host, port=None, key_file=None, cert_file=None, strict=None, timeout=None, proxy_info=None,
     ):
         self.host = host
         self.port = port
@@ -240,14 +233,7 @@ class MockHTTPBadStatusConnection(object):
     num_calls = 0
 
     def __init__(
-        self,
-        host,
-        port=None,
-        key_file=None,
-        cert_file=None,
-        strict=None,
-        timeout=None,
-        proxy_info=None,
+        self, host, port=None, key_file=None, cert_file=None, strict=None, timeout=None, proxy_info=None,
     ):
         self.host = host
         self.port = port
@@ -328,11 +314,7 @@ def server_socket(fun, request_count=1, timeout=5, scheme="", tls=None):
                     # at least in other/connection_close test
                     # should not be a problem since socket would close upon garbage collection
             if gcounter[0] > request_count:
-                gresult[0] = Exception(
-                    "Request count expected={0} actual={1}".format(
-                        request_count, gcounter[0]
-                    )
-                )
+                gresult[0] = Exception("Request count expected={0} actual={1}".format(request_count, gcounter[0]))
         except Exception as e:
             # traceback.print_exc caused IOError: concurrent operation on sys.stderr.close() under setup.py test
             print(traceback.format_exc(), file=sys.stderr)
@@ -458,21 +440,12 @@ def http_response_bytes(
     if add_etag:
         headers.setdefault("etag", '"{0}"'.format(hashlib.md5(body).hexdigest()))
     header_string = "".join("{0}: {1}\r\n".format(k, v) for k, v in headers.items())
-    if (
-        not undefined_body_length
-        and proto != "HTTP/1.0"
-        and "content-length" not in headers
-    ):
-        raise Exception(
-            "httplib2.tests.http_response_bytes: client could not figure response body length"
-        )
+    if not undefined_body_length and proto != "HTTP/1.0" and "content-length" not in headers:
+        raise Exception("httplib2.tests.http_response_bytes: client could not figure response body length")
     if str(status).isdigit():
         status = "{} {}".format(status, http_client.responses[status])
     response = (
-        "{proto} {status}\r\n{headers}\r\n".format(
-            proto=proto, status=status, headers=header_string
-        ).encode()
-        + body
+        "{proto} {status}\r\n{headers}\r\n".format(proto=proto, status=status, headers=header_string).encode() + body
     )
     return response
 
@@ -524,21 +497,6 @@ def server_reflect(**kwargs):
     response_kwargs = {k: kwargs.pop(k) for k in dict(kwargs) if k in _http_kwargs}
     http_handler = make_http_reflect(**response_kwargs)
     return server_request(http_handler, **kwargs)
-
-
-def http_parse_auth(s):
-    """https://tools.ietf.org/html/rfc7235#section-2.1
-    """
-    scheme, rest = s.split(" ", 1)
-    result = {}
-    while True:
-        m = httplib2.WWW_AUTH_RELAXED.search(rest)
-        if not m:
-            break
-        if len(m.groups()) == 3:
-            key, value, rest = m.groups()
-            result[key.lower()] = httplib2.UNQUOTE_PAIRS.sub(r"\1", value)
-    return result
 
 
 def store_request_response(out):
@@ -609,14 +567,19 @@ def http_reflect_with_auth(allow_scheme, allow_credentials, out_renew_nonce=None
         auth_header = request.headers.get("authorization", "")
         if not auth_header:
             return deny()
-        if " " not in auth_header:
+        try:
+            auth_parsed = httplib2.auth._parse_www_authenticate(request.headers, "authorization")
+            print("debug: auth_parsed", auth_parsed)
+        except httplib2.error.MalformedHeader:
+            print("debug: auth header error")
             return http_response_bytes(status=400, body=b"authorization header syntax error")
-        scheme, data = auth_header.split(" ", 1)
-        scheme = scheme.lower()
+        scheme = auth_header.split(" ", 1)[0].lower()
+        print("debug: first auth scheme='{}'".format(scheme))
         if scheme != allow_scheme:
             return deny(body=b"must use different auth scheme")
+        auth_info = auth_parsed[scheme]
         if scheme == "basic":
-            decoded = base64.b64decode(data).decode()
+            decoded = base64.b64decode(auth_info["token"]).decode()
             username, password = decoded.split(":", 1)
             if (username, password) in allow_credentials:
                 return make_http_reflect()(request)
@@ -630,7 +593,6 @@ def http_reflect_with_auth(allow_scheme, allow_credentials, out_renew_nonce=None
                 gserver_nonce[0] = nextnonce
                 gnextnonce[0] = None
             server_nonce_current = gserver_nonce[0]
-            auth_info = http_parse_auth(data)
             client_cnonce = auth_info.get("cnonce", "")
             client_nc = auth_info.get("nc", "")
             client_nonce = auth_info.get("nonce", "")
@@ -651,45 +613,30 @@ def http_reflect_with_auth(allow_scheme, allow_credentials, out_renew_nonce=None
                 return deny(body=b"auth-info nc missing")
             if client_opaque != server_opaque:
                 return deny(
-                    body="auth-info opaque mismatch expected={} actual={}".format(
-                        server_opaque, client_opaque
-                    ).encode()
+                    body="auth-info opaque mismatch expected={} actual={}".format(server_opaque, client_opaque).encode()
                 )
             for allow_username, allow_password in allow_credentials:
-                ha1 = hasher(
-                    ":".join((allow_username, realm, allow_password)).encode()
-                ).hexdigest()
+                ha1 = hasher(":".join((allow_username, realm, allow_password)).encode()).hexdigest()
                 allow_response = hasher(
-                    ":".join(
-                        (ha1, client_nonce, client_nc, client_cnonce, client_qop, ha2)
-                    ).encode()
+                    ":".join((ha1, client_nonce, client_nc, client_cnonce, client_qop, ha2)).encode()
                 ).hexdigest()
                 rspauth_ha2 = hasher(":{}".format(request.uri).encode()).hexdigest()
                 rspauth = hasher(
-                    ":".join(
-                        (
-                            ha1,
-                            client_nonce,
-                            client_nc,
-                            client_cnonce,
-                            client_qop,
-                            rspauth_ha2,
-                        )
-                    ).encode()
+                    ":".join((ha1, client_nonce, client_nc, client_cnonce, client_qop, rspauth_ha2,)).encode()
                 ).hexdigest()
                 if auth_info.get("response", "") == allow_response:
                     # TODO: fix or remove doubtful comment
                     # do we need to save nc only on success?
                     glastnc[0] = client_nc
                     allow_headers = {
-                        "authentication-info": " ".join(
+                        "authentication-info": ", ".join(filter(None,
                             (
                                 'nextnonce="{}"'.format(nextnonce) if nextnonce else "",
                                 "qop={}".format(client_qop),
                                 'rspauth="{}"'.format(rspauth),
                                 'cnonce="{}"'.format(client_cnonce),
                                 "nc={}".format(client_nc),
-                            )
+                            ))
                         ).strip()
                     }
                     return make_http_reflect(headers=allow_headers)(request)
@@ -698,11 +645,12 @@ def http_reflect_with_auth(allow_scheme, allow_credentials, out_renew_nonce=None
             x_wsse = request.headers.get("x-wsse", "")
             if x_wsse.count(",") != 3:
                 return http_response_bytes(status=400, body=b"x-wsse header syntax error")
-            auth_info = http_parse_auth(x_wsse)
-            client_username = auth_info.get("username", "")
-            client_nonce = auth_info.get("nonce", "")
-            client_created = auth_info.get("created", "")
-            client_digest = auth_info.get("passworddigest", "")
+            wsse_params = httplib2.auth._parse_www_authenticate(request.headers, "x-wsse").get("usernametoken", {})
+            print("debug: wsse_params", wsse_params)
+            client_username = wsse_params.get("username", "")
+            client_nonce = wsse_params.get("nonce", "")
+            client_created = wsse_params.get("created", "")
+            client_digest = wsse_params.get("passworddigest", "")
             allow_password = None
             for allow_username, allow_password in allow_credentials:
                 if client_username == allow_username:
@@ -712,7 +660,7 @@ def http_reflect_with_auth(allow_scheme, allow_credentials, out_renew_nonce=None
 
             digest = hashlib.sha1("".join((client_nonce, client_created, allow_password)).encode("utf-8")).digest()
             digest_b64 = base64.b64encode(digest).decode()
-            print("$$$ check client={} == real={}".format(client_digest, digest_b64))
+            print("debug: check client={} == real={}".format(client_digest, digest_b64))
             if client_digest == digest_b64:
                 return make_http_reflect()(request)
 
