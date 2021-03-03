@@ -5,7 +5,10 @@ from __future__ import print_function
 import email.utils
 import errno
 import httplib2
-import mock
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 import os
 import pytest
 from six.moves import http_client, urllib

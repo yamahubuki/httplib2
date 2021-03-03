@@ -1,5 +1,8 @@
 import httplib2
-import mock
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 import os
 import pickle
 import pytest
