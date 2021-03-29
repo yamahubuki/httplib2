@@ -7,12 +7,10 @@ import email.utils
 import functools
 import gzip
 import hashlib
-import httplib2
 import os
 import random
 import re
 import shutil
-import six
 import socket
 import ssl
 import struct
@@ -21,8 +19,11 @@ import threading
 import time
 import traceback
 import zlib
-from six.moves import http_client, queue
 
+import httplib2
+import pytest
+import six
+from six.moves import http_client, queue
 
 DUMMY_URL = "http://127.0.0.1:1"
 DUMMY_HTTPS_URL = "https://127.0.0.1:2"
@@ -34,6 +35,9 @@ CLIENT_PEM = os.path.join(tls_dir, "client.pem")
 CLIENT_ENCRYPTED_PEM = os.path.join(tls_dir, "client_encrypted.pem")
 SERVER_PEM = os.path.join(tls_dir, "server.pem")
 SERVER_CHAIN = os.path.join(tls_dir, "server_chain.pem")
+skip_benchmark = pytest.mark.skipif(
+    os.getenv("httplib2_test_bench", "") != "1", reason="benchmark disabled by default, set env httplib2_test_bench=1",
+)
 
 
 @contextlib.contextmanager
@@ -629,14 +633,17 @@ def http_reflect_with_auth(allow_scheme, allow_credentials, out_renew_nonce=None
                     # do we need to save nc only on success?
                     glastnc[0] = client_nc
                     allow_headers = {
-                        "authentication-info": ", ".join(filter(None,
-                            (
-                                'nextnonce="{}"'.format(nextnonce) if nextnonce else "",
-                                "qop={}".format(client_qop),
-                                'rspauth="{}"'.format(rspauth),
-                                'cnonce="{}"'.format(client_cnonce),
-                                "nc={}".format(client_nc),
-                            ))
+                        "authentication-info": ", ".join(
+                            filter(
+                                None,
+                                (
+                                    'nextnonce="{}"'.format(nextnonce) if nextnonce else "",
+                                    "qop={}".format(client_qop),
+                                    'rspauth="{}"'.format(rspauth),
+                                    'cnonce="{}"'.format(client_cnonce),
+                                    "nc={}".format(client_nc),
+                                ),
+                            )
                         ).strip()
                     }
                     return make_http_reflect(headers=allow_headers)(request)

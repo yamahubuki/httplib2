@@ -246,6 +246,49 @@ def test_parse_www_authenticate_complexity():
     assert error < 2, "_parse_www_authenticate scales too fast"
 
 
+@tests.skip_benchmark
+@pytest.mark.parametrize(
+    "data",
+    (
+        'Basic realm="me", algorithm="MD5"',
+        'Digest realm="digest1", qop="auth,auth-int", nonce="7102dd2", opaque="e9517f"',
+        'Digest realm="2-comma-d", qop="auth-int", nonce="c0c8ff1", Basic realm="2-comma-b"',
+        "Bearer 0b79bab50daca910b000d4f1a2b675d604257e42",
+    ),
+)
+def test_benchmark_parse_www_authenticate(data):
+    # TODO just use time.process_time() after python2 support is removed
+    process_time = getattr(time, "process_time", time.time)
+
+    def measure(header, loop):
+        tbegin = process_time()
+        for _ in range(loop):
+            httplib2.auth._parse_www_authenticate(header)
+        tend = process_time()
+        elapsed_us = round((tend * 1e6) - (tbegin * 1e6), 0)
+        return elapsed_us
+
+    header = {"www-authenticate": data}
+    min_time = 1e6
+    repeat = 7
+
+    # timeit.autorange
+    loop = 1
+    while True:
+        elapsed_us = measure(header, loop)
+        if elapsed_us >= min_time:
+            break
+        elif elapsed_us < min_time / 10:
+            k = 10.0
+        else:
+            k = 1.2
+        loop = int(loop * k) + 1
+
+    fastest = min(measure(header, loop) for _ in range(repeat))
+    speed = int(fastest / loop)
+    print("x{} time={}us speed={} us/op".format(loop, fastest, speed))
+
+
 def test_digest_object():
     credentials = ("joe", "password")
     host = None
