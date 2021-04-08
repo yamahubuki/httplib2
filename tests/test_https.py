@@ -71,34 +71,20 @@ def test_not_trusted_ca():
             pass
 
 
-@pytest.mark.skipif(
-    not hasattr(tests.ssl_context(), "minimum_version"),
-    reason="ssl doesn't support TLS min/max",
+ssl_context_accept_version = hasattr(tests.ssl_context(), "maximum_version") and hasattr(
+    tests.ssl_context(), "minimum_version"
 )
-def test_set_min_tls_version():
-    # Test setting minimum TLS version
+
+
+@pytest.mark.skipif(not ssl_context_accept_version, reason="ssl doesn't support TLS min/max")
+@pytest.mark.parametrize("attr", ("maximum_version", "minimum_version"))
+@pytest.mark.parametrize("version", (None, "TLSv1_2", ssl.TLSVersion.TLSv1_2) if ssl_context_accept_version else (None,))
+def test_set_tls_version(attr, version):
     # We expect failure on Python < 3.7 or OpenSSL < 1.1
-    expect_success = hasattr(ssl.SSLContext(), 'minimum_version')
+    expect_success = hasattr(ssl.SSLContext(), attr)
+    kwargs = {"tls_" + attr: version}
+    http = httplib2.Http(**kwargs)
     try:
-        http = httplib2.Http(tls_minimum_version="TLSv1_2")
-        http.request(tests.DUMMY_HTTPS_URL)
-    except RuntimeError:
-        assert not expect_success
-    except socket.error:
-        assert expect_success
-
-
-@pytest.mark.skipif(
-    not hasattr(tests.ssl_context(), "maximum_version"),
-    reason="ssl doesn't support TLS min/max",
-)
-def test_set_max_tls_version():
-    # Test setting maximum TLS version
-    # We expect RuntimeError on Python < 3.7 or OpenSSL < 1.1
-    # We expect socket error otherwise
-    expect_success = hasattr(ssl.SSLContext(), 'maximum_version')
-    try:
-        http = httplib2.Http(tls_maximum_version="TLSv1_2")
         http.request(tests.DUMMY_HTTPS_URL)
     except RuntimeError:
         assert not expect_success
