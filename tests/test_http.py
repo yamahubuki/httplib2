@@ -735,4 +735,11 @@ def test_inject_space():
         response, content = http.request(danger_url, "GET")
         assert response.status == 200
         req = tests.HttpRequest.from_bytes(content)
-        assert req.uri == "/?q=%20HTTP/1.1%0D%0Aignore-http:"
+        expect = (
+            # new behavior after bpo-43882 fix
+            # https://github.com/httplib2/httplib2/issues/193
+            "/?q=%20HTTP/1.1ignore-http:",
+            # old behavior
+            "/?q=%20HTTP/1.1%0D%0Aignore-http:",
+        )
+        assert req.uri in expect
