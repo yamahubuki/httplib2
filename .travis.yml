@@ -27,7 +27,6 @@ jobs:
   include:
     - stage: test
       python: pypy
-      dist: trusty
       install: pip install $pip_install_common 'codecov>=2.0.15' -r requirements-test.txt
       script: script/test -sv && codecov
     - stage: test
