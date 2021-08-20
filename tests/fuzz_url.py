@@ -1,8 +1,11 @@
 import sys
 import atheris
-import httplib2
+
+with atheris.instrument_imports():
+    import httplib2
 
 
+@atheris.instrument_func
 def TestOneInput(data):
     fdp = atheris.FuzzedDataProvider(data)
     original = fdp.ConsumeUnicode(sys.maxsize)
