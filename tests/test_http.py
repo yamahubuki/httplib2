@@ -5,6 +5,7 @@ from __future__ import print_function
 import email.utils
 import errno
 import httplib2
+
 try:
     from unittest import mock
 except ImportError:
@@ -23,9 +24,7 @@ def _raise_connection_refused_exception(*args, **kwargs):
 def test_connection_type():
     http = httplib2.Http()
     http.force_exception_to_status_code = False
-    response, content = http.request(
-        tests.DUMMY_URL, connection_type=tests.MockHTTPConnection
-    )
+    response, content = http.request(tests.DUMMY_URL, connection_type=tests.MockHTTPConnection)
     assert response["content-location"] == tests.DUMMY_URL
     assert content == b"the body"
 
@@ -36,9 +35,7 @@ def test_bad_status_line_retry():
     httplib2.RETRIES = 1
     http.force_exception_to_status_code = False
     try:
-        response, content = http.request(
-            tests.DUMMY_URL, connection_type=tests.MockHTTPBadStatusConnection
-        )
+        response, content = http.request(tests.DUMMY_URL, connection_type=tests.MockHTTPBadStatusConnection)
     except http_client.BadStatusLine:
         assert tests.MockHTTPBadStatusConnection.num_calls == 2
     httplib2.RETRIES = old_retries
@@ -59,11 +56,10 @@ def test_unknown_server():
     assert response.status == 400
 
 
-@pytest.mark.skipif(
-    os.environ.get("TRAVIS_PYTHON_VERSION") in ("2.7", "pypy"),
-    reason="Fails on Travis py27/pypy, works elsewhere. "
-    "See https://travis-ci.org/httplib2/httplib2/jobs/408769880.",
-)
+# @pytest.mark.skipif(
+#     os.environ.get("PYTHON_VERSION") in ("2.7", "pypy"),
+#     reason="Fails on Travis py27/pypy, works elsewhere. See https://travis-ci.org/httplib2/httplib2/jobs/408769880.",
+# )
 @mock.patch("socket.socket.connect", spec=True)
 def test_connection_refused_raises_exception(mock_socket_connect):
     mock_socket_connect.side_effect = _raise_connection_refused_exception
@@ -73,11 +69,10 @@ def test_connection_refused_raises_exception(mock_socket_connect):
         http.request(tests.DUMMY_URL)
 
 
-@pytest.mark.skipif(
-    os.environ.get("TRAVIS_PYTHON_VERSION") in ("2.7", "pypy"),
-    reason="Fails on Travis py27/pypy, works elsewhere. "
-    "See https://travis-ci.org/httplib2/httplib2/jobs/408769880.",
-)
+# @pytest.mark.skipif(
+#     os.environ.get("PYTHON_VERSION") in ("2.7", "pypy"),
+#     reason="Fails on Travis py27/pypy, works elsewhere. See https://travis-ci.org/httplib2/httplib2/jobs/408769880.",
+# )
 @mock.patch("socket.socket.connect", spec=True)
 def test_connection_refused_returns_response(mock_socket_connect):
     mock_socket_connect.side_effect = _raise_connection_refused_exception
@@ -86,11 +81,7 @@ def test_connection_refused_returns_response(mock_socket_connect):
     response, content = http.request(tests.DUMMY_URL)
     content = content.lower()
     assert response["content-type"] == "text/plain"
-    assert (
-        b"connection refused" in content
-        or b"actively refused" in content
-        or b"socket is not connected" in content
-    )
+    assert b"connection refused" in content or b"actively refused" in content or b"socket is not connected" in content
     assert response.status == 400
 
 
@@ -172,9 +163,7 @@ def test_get_300_with_location():
     final_content = b"This is the final destination.\n"
     routes = {
         "/final": tests.http_response_bytes(body=final_content),
-        "": tests.http_response_bytes(
-            status="300 Multiple Choices", headers={"location": "/final"}
-        ),
+        "": tests.http_response_bytes(status="300 Multiple Choices", headers={"location": "/final"}),
     }
     with tests.server_route(routes, request_count=2) as uri:
         response, content = http.request(uri, "GET")
@@ -210,9 +199,7 @@ def test_get_300_without_location():
     # Not giving a Location: header in a 300 response is acceptable
     # In which case we just return the 300 response
     http = httplib2.Http()
-    with tests.server_const_http(
-        status="300 Multiple Choices", body=b"redirect body"
-    ) as uri:
+    with tests.server_const_http(status="300 Multiple Choices", body=b"redirect body") as uri:
         response, content = http.request(uri, "GET")
     assert response.status == 300
     assert response.previous is None
@@ -251,9 +238,8 @@ def test_get_301():
 
 
 @pytest.mark.skip(
-    not os.environ.get("httplib2_test_still_run_skipped")
-    and os.environ.get("TRAVIS_PYTHON_VERSION") in ("2.7", "pypy"),
-    reason="FIXME: timeout on Travis py27 and pypy, works elsewhere",
+    not os.environ.get("httplib2_test_still_run_skipped") and os.environ.get("PYTHON_VERSION") in ("2.7", "pypy"),
+    reason="FIXME: timeout on CI py27 and pypy, works elsewhere",
 )
 def test_head_301():
     # Test that we automatically follow 301 redirects
@@ -276,11 +262,7 @@ def test_head_301():
     assert not response.previous.fromcache
 
 
-@pytest.mark.xfail(
-    reason=(
-        "FIXME: 301 cache works only with follow_redirects, should work " "regardless"
-    )
-)
+@pytest.mark.xfail(reason=("FIXME: 301 cache works only with follow_redirects, should work regardless"))
 def test_get_301_no_redirect():
     # Test that we cache the 301 response
     http = httplib2.Http(cache=tests.get_cache_path(), timeout=0.5)
@@ -310,9 +292,7 @@ def test_get_302():
         "/second": tests.http_response_bytes(
             status="302 Found", headers={"location": "/final"}, body=b"second redirect"
         ),
-        "": tests.http_response_bytes(
-            status="302 Found", headers={"location": "/second"}, body=b"redirect body"
-        ),
+        "": tests.http_response_bytes(status="302 Found", headers={"location": "/second"}, body=b"redirect body"),
     }
     with tests.server_route(routes, request_count=7) as uri:
         second_url = urllib.parse.urljoin(uri, "/second")
@@ -353,9 +333,7 @@ def test_get_302_redirection_limit():
         "/second": tests.http_response_bytes(
             status="302 Found", headers={"location": "/final"}, body=b"second redirect"
         ),
-        "": tests.http_response_bytes(
-            status="302 Found", headers={"location": "/second"}, body=b"redirect body"
-        ),
+        "": tests.http_response_bytes(status="302 Found", headers={"location": "/second"}, body=b"redirect body"),
     }
     with tests.server_route(routes, request_count=4) as uri:
         try:
@@ -402,9 +380,8 @@ def test_get_302_no_location():
 
 
 @pytest.mark.skip(
-    not os.environ.get("httplib2_test_still_run_skipped")
-    and os.environ.get("TRAVIS_PYTHON_VERSION") in ("2.7", "pypy"),
-    reason="FIXME: timeout on Travis py27 and pypy, works elsewhere",
+    not os.environ.get("httplib2_test_still_run_skipped") and os.environ.get("PYTHON_VERSION") in ("2.7", "pypy"),
+    reason="FIXME: timeout on CI py27 and pypy, works elsewhere",
 )
 def test_303():
     # Do a follow-up GET on a Location: header
@@ -412,9 +389,7 @@ def test_303():
     http = httplib2.Http()
     routes = {
         "/final": tests.make_http_reflect(),
-        "": tests.make_http_reflect(
-            status="303 See Other", headers={"location": "/final"}
-        ),
+        "": tests.make_http_reflect(status="303 See Other", headers={"location": "/final"}),
     }
     with tests.server_route(routes, request_count=2) as uri:
         response, content = http.request(uri, "POST", " ")
@@ -471,22 +446,16 @@ def test_etag_used():
         assert response.fromcache
 
         # TODO: API to read cache item, at least internal to tests
-        cache_file_name = os.path.join(
-            cache_path, httplib2.safename(httplib2.urlnorm(uri)[-1])
-        )
+        cache_file_name = os.path.join(cache_path, httplib2.safename(httplib2.urlnorm(uri)[-1]))
         with open(cache_file_name, "r") as f:
             status_line = f.readline()
         assert status_line.startswith("status:")
 
-        response, content = http.request(
-            uri, "HEAD", headers={"accept-encoding": "identity"}
-        )
+        response, content = http.request(uri, "HEAD", headers={"accept-encoding": "identity"})
         assert response.status == 200
         assert response.fromcache
 
-        response, content = http.request(
-            uri, "GET", headers={"accept-encoding": "identity", "range": "bytes=0-0"}
-        )
+        response, content = http.request(uri, "GET", headers={"accept-encoding": "identity", "range": "bytes=0-0"})
         assert response.status == 206
         assert not response.fromcache
 
@@ -496,9 +465,7 @@ def test_etag_ignore():
     http = httplib2.Http(cache=tests.get_cache_path())
     response_kwargs = dict(add_date=True, add_etag=True)
     with tests.server_reflect(request_count=3, **response_kwargs) as uri:
-        response, content = http.request(
-            uri, "GET", headers={"accept-encoding": "identity"}
-        )
+        response, content = http.request(uri, "GET", headers={"accept-encoding": "identity"})
         assert response.status == 200
         assert response["etag"] != ""
 
@@ -580,9 +547,7 @@ def test_get_304_last_modified():
 
     def handler(read):
         read()
-        yield tests.http_response_bytes(
-            status=200, body=b"something", headers={"date": date, "last-modified": date}
-        )
+        yield tests.http_response_bytes(status=200, body=b"something", headers={"date": date, "last-modified": date})
 
         request2 = read()
         assert request2.headers["if-modified-since"] == date
@@ -716,9 +681,7 @@ def test_cwe93_inject_crlf():
     # Host: localhost:57285
     http = httplib2.Http()
     with tests.server_reflect() as uri:
-        danger_url = urllib.parse.urljoin(
-            uri, "?q= HTTP/1.1\r\ninjected: attack\r\nignore-http:"
-        )
+        danger_url = urllib.parse.urljoin(uri, "?q= HTTP/1.1\r\ninjected: attack\r\nignore-http:")
         response, content = http.request(danger_url, "GET")
         assert response.status == 200
         req = tests.HttpRequest.from_bytes(content)

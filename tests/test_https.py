@@ -1,8 +1,10 @@
-import httplib2
-import pytest
-from six.moves import urllib
 import socket
 import ssl
+
+import pytest
+from six.moves import urllib
+
+import httplib2
 import tests
 
 
@@ -101,7 +103,7 @@ def test_max_tls_version():
     with tests.server_const_http(tls=True) as uri:
         http.request(uri)
         _, tls_ver, _ = http.connections.popitem()[1].sock.cipher()
-        assert tls_ver == "TLSv1.2"
+        assert "TLSv1.0" <= tls_ver <= "TLSv1.2"
 
 
 def test_client_cert_verified():
