@@ -9,12 +9,12 @@ from __future__ import division
 from __future__ import print_function
 
 import httplib2
+
 try:
     from unittest import mock
 except ImportError:
     import mock
 import os
-import pytest
 import socket
 import tests
 from six.moves import urllib
@@ -101,11 +101,11 @@ def test_headers():
     assert pi.proxy_headers == headers
 
 
-@pytest.mark.skipif(
-    os.environ.get("TRAVIS_PYTHON_VERSION") in ("2.7", "pypy"),
-    reason="Fails on Travis py27/pypy, works elsewhere. "
-    "See https://travis-ci.org/httplib2/httplib2/jobs/408769880.",
-)
+# @pytest.mark.skipif(
+#     os.environ.get("TRAVIS_PYTHON_VERSION") in ("2.7", "pypy"),
+#     reason="Fails on Travis py27/pypy, works elsewhere. "
+#     "See https://travis-ci.org/httplib2/httplib2/jobs/408769880.",
+# )
 @mock.patch("socket.socket.connect", spec=True)
 def test_server_not_found_error_is_raised_for_invalid_hostname(mock_socket_connect):
     """Invalidates https://github.com/httplib2/httplib2/pull/100."""

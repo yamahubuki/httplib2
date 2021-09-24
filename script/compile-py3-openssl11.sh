@@ -1,4 +1,4 @@
-#!not for running standalone, see .travis.yml
+#!not for running standalone, see .github/workflows/test.yaml
 
 cache_dir=$HOME/.cache
 install_dir=$cache_dir/py3-openssl11

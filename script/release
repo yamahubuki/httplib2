@@ -96,7 +96,7 @@ interactive() {
 	$venv/bin/python setup.py sdist bdist_wheel
 	$venv/bin/check-manifest || echo "FIXME check-manifest" >&2
 
-	if confirm "Upload to PyPI? Use in special situation, normally CI (Travis) will upload to PyPI. [yN] " ; then
+	if confirm "Upload to PyPI? Use in special situation, normally CI/CD will upload to PyPI. [yN] " ; then
 		$venv/bin/twine upload dist/* || exit 1
 	fi
 
