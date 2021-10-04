@@ -143,8 +143,8 @@ def test_client_cert_verified():
         http.request(uri)
 
     assert len(cert_log) == 1
-    # TODO extract serial from tests.CLIENT_PEM
-    assert cert_log[0]["serialNumber"] == "E2AA6A96D1BF1AEC"
+    expect_serial = tests.x509_serial(tests.CLIENT_PEM) if tests.x509 else 16332984194609126127
+    assert int(cert_log[0]["serialNumber"], base=16) == expect_serial
 
 
 def test_client_cert_password_verified():
@@ -167,8 +167,8 @@ def test_client_cert_password_verified():
         http.request(uri)
 
     assert len(cert_log) == 1
-    # TODO extract serial from tests.CLIENT_PEM
-    assert cert_log[0]["serialNumber"] == "E2AA6A96D1BF1AED"
+    expect_serial = tests.x509_serial(tests.CLIENT_ENCRYPTED_PEM) if tests.x509 else 16332984194609126128
+    assert int(cert_log[0]["serialNumber"], base=16) == expect_serial
 
 
 @pytest.mark.skipif(
