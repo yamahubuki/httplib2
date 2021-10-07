@@ -1,3 +1,15 @@
+0.20.0
+
+  IMPORTANT cacerts: remove expired DST Root CA X3, add ISRG Root X1, X2
+  https://github.com/httplib2/httplib2/pull/200
+  https://github.com/httplib2/httplib2/issues/203
+
+  tls: accept min/max ssl.TLSVersion enum values
+  https://github.com/httplib2/httplib2/pull/191
+
+  setup(python_requires=...) may need setuptools update
+  https://github.com/httplib2/httplib2/pull/195
+
 0.19.1
 
   auth header parsing performance optimizations; Thanks to Paul McGuire
