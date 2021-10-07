@@ -1,3 +1,7 @@
+0.20.1
+
+  No changes from 0.20.0, re-upload of broken py2 wheel.
+
 0.20.0
 
   IMPORTANT cacerts: remove expired DST Root CA X3, add ISRG Root X1, X2
