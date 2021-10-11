@@ -183,6 +183,20 @@ def _get_end2end_headers(response):
     return [header for header in list(response.keys()) if header not in hopbyhop]
 
 
+def _errno_from_exception(e):
+    # socket.error and common wrap in .args
+    if len(e.args) > 0:
+        return e.args[0].errno if isinstance(e.args[0], socket.error) else e.errno
+
+    # pysocks.ProxyError wraps in .socket_err
+    # https://github.com/httplib2/httplib2/pull/202
+    if hasattr(e, "socket_err"):
+        e_int = e.socket_err
+        return e_int.args[0].errno if isinstance(e_int.args[0], socket.error) else e_int.errno
+
+    return None
+
+
 URI = re.compile(r"^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?")
 
 
@@ -1355,7 +1369,7 @@ class Http(object):
                 conn.close()
                 raise ServerNotFoundError("Unable to find the server at %s" % conn.host)
             except socket.error as e:
-                errno_ = e.args[0].errno if isinstance(e.args[0], socket.error) else e.errno
+                errno_ = _errno_from_exception(e)
                 if errno_ in (errno.ENETUNREACH, errno.EADDRNOTAVAIL) and i < RETRIES:
                     continue  # retry on potentially transient errors
                 raise
