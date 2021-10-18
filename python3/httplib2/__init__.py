@@ -932,6 +932,8 @@ def proxy_info_from_url(url, method="http", noproxy=None):
     username = None
     password = None
     port = None
+    if "://" in url:
+        url = url.split("://")[1]
     if "@" in url:
         ident, host_port = url.split("@", 1)
         if ":" in ident:
