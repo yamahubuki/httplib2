@@ -1,3 +1,11 @@
+0.20.2
+
+  auth: support pyparsing v3 (AttributeError downcaseTokens)
+  https://github.com/httplib2/httplib2/issues/207
+
+  proxy: correct extraction of errno from pysocks ProxyConnectionError
+  https://github.com/httplib2/httplib2/pull/202
+
 0.20.1
 
   No changes from 0.20.0, re-upload of broken py2 wheel.
