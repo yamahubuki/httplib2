@@ -25,6 +25,10 @@ import pytest
 import six
 from six.moves import http_client, queue
 
+x509 = None
+if sys.version_info >= (3, 6):
+    from cryptography import x509
+
 DUMMY_URL = "http://127.0.0.1:1"
 DUMMY_HTTPS_URL = "https://127.0.0.1:2"
 
@@ -725,3 +729,28 @@ def ssl_context(protocol=None):
     if sys.version_info < (3, 5, 3):
         return ssl.SSLContext(ssl.PROTOCOL_SSLv23)
     return ssl.SSLContext()
+
+
+def memoize(fun):
+    # functools.cache 3.9+
+    f = getattr(functools, "cache", None)
+    if f:
+        return f(fun)
+
+    # functools.lru_cache 3.2+
+    f = getattr(functools, "lru_cache", None)
+    if f:
+        return f()(fun)
+
+    # < 3.2
+    return fun
+
+
+@memoize
+def x509_serial(path):
+    if x509 is None:
+        raise Exception("x509_serial requires package cryptography installed")
+    with open(path, "rb") as f:
+        pem = f.read()
+    cert = x509.load_pem_x509_certificate(pem)
+    return cert.serial_number

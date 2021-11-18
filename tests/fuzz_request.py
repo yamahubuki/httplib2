@@ -13,6 +13,7 @@ def TestOneInput(input_bytes):
     with tests.server_const_bytes(ib) as uri:
         http.request(uri)
 
+
 def main():
     atheris.Setup(sys.argv, TestOneInput, enable_python_coverage=True)
     atheris.Fuzz()
